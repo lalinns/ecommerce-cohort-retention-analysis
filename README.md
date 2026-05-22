@@ -59,16 +59,16 @@ I first checked whether the event timeline showed signs of logging gaps or abnor
 
 These checks suggest that the event stream is continuous enough for retention analysis.
 
-## 2.Cohort anchor viability check
+## 2. Cohort anchor viability check
 Because the dataset does not include a true registration timestamp or a true lifetime first-seen date, I defined anchor event as:
 
 >first_seen = user’s first observed event date
 
 This means the analysis measures first-observed retention, not true signup retention.
 
-To check whether this proxy anchor was usable, I inspected the distribution of first_seen dates:
+To check whether this proxy anchor was usable, I inspected the distribution of first_seen dates. The chart includes a 7-day moving average to smooth daily fluctuations and make the broader trend easier to inspect.
 
-![alt text](anchor_distribution.png)
+![alt text](visuals/anchor_distribution.JPG)
 
 - No huge spike on the first dataset day, which suggests severe left-edge truncation is less likely.
 - No long periods with zero or extremely low new users appear, which suggests logging is continuous.
@@ -89,7 +89,8 @@ The results confirm that nearly all users are observable for D7 and D14, and mos
 I checked weekly cohort sizes because retention rates can become unstable when cohorts are too small.
 
 Cohorts are defined using first_seen (anchor event) then count new users per ISO week
-![alt text](image-2.png)
+
+![alt text](visuals/weekly_cohort_size.JPG)
 
 - Weekly cohorts are consistently large across the dataset (roughly ~60k–90k new users/week), indicating that retention estimates are based on sufficient sample sizes and are likely to be stable.
 - The first and last cohort weeks show visible difference in size compared to the rest, suggesting potential boundary effects caused by incomplete data coverage at the start and end of the dataset. Therefore, the first and last cohort weeks are treated as boundary cohorts and excluded from reported retention metrics and interpretation.
@@ -129,7 +130,7 @@ The final analysis uses **exact-day any-event retention**. A user is counted as 
 
 Following the boundary cohort check in Section 4.4, the first and last cohort weeks are excluded from all reported retention metrics to avoid bias from incomplete data coverage.
 
-## 1. Overall exact-day retention
+## 1. Overall exact-day retention baseline
 | checkpoint | mature users | retained users | exact-day retention_rate |
 |------------|--------------|----------------|----------------|
 | D1         | 1,366,774    | 21,813         | 1.596%         |
@@ -141,8 +142,10 @@ Following the boundary cohort check in Section 4.4, the first and last cohort we
 
 The output shows that exact-day retention remains under 2% at all reported checkpoints. This means that only a small share of mature users were active on those exact checkpoint days. Retention also declines at later checkpoints, which is consistent with the stricter exact-day definition.
 
-## 2. Weekly cohort heatmap
-[insert heatmap]
+## 2. Weekly cohort retention pattern consistency
+To check whether the overall retention pattern was consistent across cohort weeks, I created a weekly cohort heatmap using exact-day retention at D1, D7, D14, and D30.
+
+![alt text](visuals/weekly_cohort_retention_heatmap.JPG)
 
 The output shows:
 - Except for the first and last cohort week, the same declining exact-day retention pattern is visible across most weekly cohorts: D1 is the highest checkpoint, followed by a sharp drop by D7 and further declines at D14 and D30. This suggests that the overall retention shape is broadly consistent across cohorts rather than being driven by only a few specific weeks.
@@ -152,7 +155,7 @@ The output shows:
 - Later cohorts are blank at longer 
 checkpoints, which is expected because they are not yet mature enough for those windows.
 
-## 3. Segmented retention by early browsing breadth
+## 3. Retention differences by early browsing breadth
 The primary segmentation is based on **distinct items interacted with in the first 3 days after `first_seen`**. Users are grouped into three buckets: `1_item`, `2_3_items`, and `4plus_items`. 
 
 I selected this segmentation because it provided a clearer user-level behavioral signal and aligned with the business question. Alternative segmentation candidates were screened separately and are documented in the Appendix.
@@ -166,6 +169,8 @@ I selected this segmentation because it provided a clearer user-level behavioral
 *Note: Because D1 is partly inside the segment-definition window, I didn't use D1 retention as a key segmented outcome*
 
 Because browsing breadth is defined using the first 3 days after first_seen, the segmented retention comparison focuses on later checkpoints after that early behavior window closes: D7, D14, and D30.
+
+![alt text](visuals/later_exact_day_retention_by_early_browsing_breadth.JPG)
 
 The output shows:
 - Across all browsing-breadth segments, exact-day retention declines over time. 
@@ -206,7 +211,7 @@ The selected early browsing breadth segmentation is useful for this project, but
 
 # APPENDIX
 - During initial project scoping, I also reviewed `item_properties` and `category_tree` tables as possible inputs for item-context or category-based retention segmentation. They were cleaned and validated during exploration, but they were not carried into the final reporting views because the selected retention analysis and segmentation could be fully supported by event-level behavior from the events table alone.
-### 2. Item_properties table
+### Item_properties table
 The item_properties table is an entity–attribute–value change log. Because `timestamp` was stored as epoch milliseconds, I converted it into UTC TIMESTAMP format. I then selected the interpretable properties categoryid and available, together with one exploratory numeric property, 790, which was parsed into p1_numeric.
 
 I then checked for:
@@ -219,7 +224,7 @@ I then checked for:
 
 The selected item properties were successfully parsed and retained in `item_properties_cleaned`. Extreme values in p1_numeric were flagged for caution rather than removed, because the business meaning of that anonymized property is unknown.
 
-### 3. Category_tree table
+### Category_tree table
 I validated the category_tree table to ensure the category hierarchy was structurally usable. The checks covered:
 - expected NULL parentid values for root categories
 - duplicate or conflicting category assignments
