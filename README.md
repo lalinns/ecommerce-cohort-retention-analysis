@@ -22,8 +22,9 @@
 - [APPENDIX: SUPPORTING DATASET EXPLORATION](#appendix-supporting-dataset-exploration)
 
 # PROJECT OVERVIEW
-This project analyzes early user retention in an e-commerce event dataset. The business question is:
+This project is a descriptive and diagnostic product analytics case study using the RetailRocket e-commerce event dataset. 
 
+The business question is:
 >Why are many newly observed users not returning after their first few sessions, and what can be done to improve retention?
 
 The analysis focuses on three questions:
@@ -31,7 +32,7 @@ The analysis focuses on three questions:
 2. Is the retention pattern consistent across weekly cohorts?
 3. Do users with different levels of early item exploration show different later retention outcomes?
 
-The final goal is to identify an actionable early retention signal and translate it into e-commerce product recommendations.
+This project reflects a business-first analytics approach: instead of only reporting metrics, it connects user behavior patterns to actionable retention opportunities that product, marketing, or growth teams could test.
 
 # DATASET AND APPROACH
 ## Dataset
