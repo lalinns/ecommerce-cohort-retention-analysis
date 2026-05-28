@@ -1,50 +1,143 @@
-## Table of Contents
-- [PROJECT OVERVIEW](#project-overview)
-- [DATASET AND APPROACH](#dataset-and-approach)
-  - [Dataset](#dataset)
-  - [Data Preparation And Cleaning](#data-preparation-and-cleaning)
-  - [Analytical Approach](#analytical-approach)
-- [DATA VALIDATION](#data-validation)
-  - [1/ Event timeline and volume stability](#1-event-timeline-and-volume-stability)
-  - [2/ Cohort anchor viability check](#2-cohort-anchor-viability-check)
-  - [3/ Retention window sufficiency](#3-retention-window-sufficiency)
-  - [4/ Weekly cohort stability and boundary effects](#4-weekly-cohort-stability-and-boundary-effects)
-  - [5/ Post-anchor return signal](#5-post-anchor-return-signal)
-  - [Overall Assessment](#overall-assessment)
-- [ANALYSIS](#analysis)
-  - [1/ Overall exact-day retention baseline](#1-overall-exact-day-retention-baseline)
-  - [2/ Weekly cohort retention pattern consistency](#2-weekly-cohort-retention-pattern-consistency)
-  - [3/ Retention differences by early browsing breadth](#3-retention-differences-by-early-browsing-breadth)
-- [KEY FINDINGS](#key-findings)
-- [RECOMMENDED ACTIONS](#recommended-actions)
-- [LIMITATION](#limitation)
-- [FUTURE WORK](#future-work)
-- [APPENDIX: SUPPORTING DATASET EXPLORATION](#appendix-supporting-dataset-exploration)
+# E-COMMERCE COHORT RETENTION ANALYSIS
+
+**Table of Contents**
+
+- [Project Overview](#project-overview)
+- [Key Findings](#key-findings)
+- [Recommended Actions](#recommended-actions)
+- [Analytical Approach](#analytical-approach)
+- [Analysis](#analysis)
+- [Data Cleaning](#data-cleaning)
+- [Data Validation](#data-validation)
+- [Limitations](#limitations)
+- [Future Work](#future-work)
+- [Appendix: Supporting Dataset Exploration](#appendix-supporting-dataset-exploration)
 
 # PROJECT OVERVIEW
-This project is a descriptive and diagnostic product analytics case study using the RetailRocket e-commerce event dataset. 
+This project is a descriptive and diagnostic product analytics case study using the RetailRocket e-commerce event dataset.
+
+For this portfolio case study, I frame the analysis around a realistic product/growth stakeholder concern: a product team suspects that many newly observed users may not be returning consistently after their first activity, and wants to understand where early retention opportunities may exist.
 
 The business question is:
->Why are many newly observed users not returning after their first few sessions, and what can be done to improve retention?
+>How can we improve early retention and identify users needing support?
 
 The analysis focuses on three questions:
 1. What does overall exact-day retention look like?
 2. Is the retention pattern consistent across weekly cohorts?
 3. Do users with different levels of early item exploration show different later retention outcomes?
 
-This project reflects a business-first analytics approach: instead of only reporting metrics, it connects user behavior patterns to actionable retention opportunities that product, marketing, or growth teams could test.
+The analysis treats this stakeholder concern as a hypothesis to validate in the event data, then translates the findings into practical retention opportunities for product or growth teams.
 
-# DATASET AND APPROACH
-## Dataset
-This project uses the Retailrocket e-commerce behavior dataset, analyzed in BigQuery with GoogleSQL. The dataset contains three main tables:
+# KEY FINDINGS
+1. **Exact-day retention drops sharply after D1.**  
+   D1 has the highest exact-day retention rate, followed by a clear decline at D7, D14, and D30.
+
+2. **The retention pattern is broadly consistent across mature weekly cohorts.**  
+   The weekly cohort heatmap shows a similar retention shape across most mature cohorts, suggesting that the early drop-off is a recurring pattern rather than one isolated cohort issue.
+
+3. **The largest visible checkpoint-to-checkpoint decline occurs from D1 to D7.**  
+   This makes the D1–D7 period the most obvious early lifecycle window for retention intervention.
+
+4. **Early browsing breadth is meaningfully associated with later retention.**  
+   Users who interacted with more distinct items during their first three days showed higher D7, D14, and D30 exact-day retention than users who interacted with only one item.
+
+5. **The segmentation result is diagnostic, not causal.**  
+   The analysis does not prove that browsing more items directly causes higher retention, but it provides a useful early signal for identifying lower-engagement users who may need intervention.
+
+# RECOMMENDED ACTIONS
+These recommendations are hypotheses to test, not proven causal effects:
+1. **Test whether encouraging early item exploration improves retention:**   
+    During the first 3 days, showing related items, recently viewed recommendations or homepage recommendations to encourage newly observed users to explore more than one item
+
+2. **Target low‑breadth users with a re‑engagement trigger:**   
+    Shortly after the first 3 days, users who interact with only 1 item can be targeted with reminders or similar-item recommendations.
+
+3. **Use D7 as the first success checkpoint.**  
+   Since the largest visible decline occurs between D1 and D7, D7 should be the first checkpoint for evaluating whether early lifecycle interventions improve return behavior.
+
+4.  **Track D14 and D30 as follow-up checkpoints.**  
+   D14 and D30 should be used to check whether any early improvement lasts beyond short-term return behavior.
+
+# ANALYTICAL APPROACH
+This project uses cohort-based retention analysis to understand early return behavior and identify users who may need early engagement support.
+
+Because the dataset does not include a true signup timestamp, I use each user’s first observed event date as a proxy cohort anchor. Retention is then measured as exact-day any-event return at D1, D7, D14, and D30.
+
+The analysis is structured through three views:
+1. **Overall exact-day retention**  
+To quantify user return behavior.
+2. **Weekly cohort heatmap**  
+To check whether the retention pattern is recurring across cohort weeks rather than driven by a few unusual periods.
+3. **Segmented retention by early browsing breadth**  
+To test whether users with different levels of early item exploration show different later retention outcomes.
+
+This approach connects the business question to two practical decisions:
+- where product or growth teams should focus early retention efforts
+- which early user behavior may help identify users who may need engagement support
+
+# ANALYSIS
+The final analysis uses **exact-day any-event retention**. A user is counted as retained at D1, D7, D14, or D30 only if they have at least one event of any type (`view`, `addtocart`, or `transaction`) on that exact checkpoint day based on `TIMESTAMP_DIFF(..., DAY)`.
+
+Following the boundary cohort check in Data Validation step, the first and last cohort weeks are excluded from all reported retention metrics to avoid bias from incomplete data coverage.
+
+## 1/ Overall exact-day retention baseline
+| checkpoint | mature users | retained users | exact-day retention_rate |
+|------------|--------------|----------------|----------------|
+| D1         | 1,366,774    | 21,813         | 1.596%         |
+| D7         | 1,328,821    | 6,756          | 0.508%         |
+| D14        | 1,262,817    | 3,730          | 0.295%         |
+| D30        | 1,115,048    | 1,651          | 0.148%         |
+
+*Note: Mature users means users whose first_seen date is early enough that the dataset has enough observation time to measure that checkpoint.*
+
+The output shows that exact-day retention remains under 2% at all reported checkpoints. This means that only a small share of mature users were active on those exact checkpoint days. Retention also declines at later checkpoints, which is consistent with the stricter exact-day definition.
+
+## 2/ Weekly cohort retention pattern consistency
+To check whether the overall retention pattern was consistent across cohort weeks, I created a weekly cohort heatmap using exact-day retention at D1, D7, D14, and D30.
+
+![alt text](visuals/weekly_cohort_retention_heatmap.JPG)
+*Note: The first and last cohort weeks are shown for context, but they are treated as boundary cohorts and excluded from interpretation because of incomplete data coverage at the start and end of the dataset.*
+
+The output shows:
+- Reading vertically within the same checkpoint column, retention rates fluctuate across cohort weeks, but there is no clear pattern showing that later cohorts consistently retain worse than earlier cohorts.
+
+- Reading horizontally within each cohort row, exact-day retention generally declines from D1 to D7, then continues declining at D14 and D30. This pattern appears across most mature cohort weeks, suggesting that the overall retention shape is broadly consistent rather than being driven by only a few specific cohorts.
+
+- The largest visible checkpoint-to-checkpoint decline occurs from D1 to D7, suggesting that the steepest loss of returning users happens early in the post-acquisition period.
+
+- Later cohorts are blank at longer 
+checkpoints, which is expected because they are not yet mature enough for those windows.
+
+## 3/ Retention differences by early browsing breadth
+The primary segmentation is based on **distinct items interacted with in the first 3 days after `first_seen`**. Users are grouped into three buckets: `1_item`, `2_3_items`, and `4plus_items`. 
+
+I selected this segmentation because it provided a clearer user-level behavioral signal and aligned with the business question. Alternative segmentation candidates were screened separately and documented in `docs/segmentation_scope_screening.md`.
+
+| segment       | D1 retention | D7 retention | D14 retention | D30 retention |
+|---------------|--------------|--------------|---------------|---------------|
+| 1_item        | 0.62%        | 0.37%        | 0.23%         | 0.12%         |
+| 2_or_3_items  | 5.42%        | 0.89%        | 0.47%         | 0.24%         |
+| 4_plus_items  | 11.83%       | 2.57%        | 1.33%         | 0.63%         |
+
+*Note: Because D1 is partly inside the segment-definition window, I didn't use D1 retention as a key segmented outcome*
+
+Because browsing breadth is defined using the first 3 days after first_seen, the segmented retention comparison focuses on later checkpoints after that early behavior window closes: D7, D14, and D30.
+
+![alt text](visuals/later_exact_day_retention_by_early_browsing_breadth.JPG)
+
+The output shows:
+- Across all browsing-breadth segments, exact-day retention declines over time. 
+- Retention is consistently ordered by early browsing breadth: The 4_plus_items segment has the highest retention at every checkpoint, followed by 2_or_3_items, while 1_item has the lowest retention. This suggests that users who explore more distinct items in the first 3 days after first_seen are associated with stronger later return behavior.
+
+# DATA CLEANING
+This project analyzed in BigQuery with GoogleSQL. The dataset contains three main tables:
 - `events` table: user-level interaction events, including view, addtocart, and transaction
 - `item_properties` table: time-stamped item attribute records stored in an entity–attribute–value format
 - `category_tree` table: the category hierarchy for items
 
 The core analytical source is the `events` table because all three reporting views — overall retention, weekly cohort retention, and segmented retention by early browsing breadth — can be fully constructed from user-level event behavior.
 
-## Data Preparation And Cleaning
-Since core analytical source is the `events` table, I focused the main data preparation and cleaning process on making this table reliable for retention analysis.
+I focused the main data preparation and cleaning process on making this table reliable for retention analysis.
 
 Bcause the timestamp column was stored as epoch milliseconds, I converted it into UTC TIMESTAMP format and then performed key table-level quality checks to:
 - checked for missing or NULL values in required fields
@@ -54,23 +147,6 @@ Bcause the timestamp column was stored as epoch milliseconds, I converted it int
 - validated that event timestamps fell within a realistic observation window.
 
 This process found 460 duplicate event logs under the event-identity rule, which were removed. After cleaning, I materialized the final dataset as `events_cleaned` table to support the downstream retention analysis more efficiently.
-
-## Analytical Approach
-This project uses a cohort-based retention analysis to examine why newly observed users do not return after their first few sessions.
-
-Because the dataset does not include a true signup timestamp, I use each user’s first observed event date as a proxy cohort anchor. Retention is then measured as exact-day any-event return at D1, D7, D14, and D30.
-
-The analysis is structured through three views:
-1. **Overall exact-day retention**  
-To establish the baseline return pattern.
-2. **Weekly cohort heatmap**  
-To check whether the retention pattern is broadly consistent across cohort weeks rather than driven by a few unusual periods.
-3. **Segmented retention by early browsing breadth**  
-To test whether users with different levels of early item exploration show different later retention outcomes.
-
-This approach links the business question to both:
-- when retention drop-off is most visible, and
-- which early user behavior may help identify users who need retention intervention.
 
 # DATA VALIDATION
 Before building the final retention tables, I checked whether the dataset was suitable for cohort-based retention analysis. The validation focused on retention-critical risks: event continuity, anchor usability, observation-window sufficiency, cohort stability, and whether meaningful post-anchor return behavior exists.
@@ -144,79 +220,7 @@ The data validation checks show that:
 
 Therefore, the dataset is suitable for cohort retention and segmented analysis under the defined assumptions.
 
-# ANALYSIS
-Following the validation steps above, the analysis proceeds in 3 reporting views:
-1. **Overall exact-day retention** to establish the baseline return pattern
-2. **Weekly cohort heatmap** to check whether the retention pattern is consistent across cohort weeks
-3. **Segmented exact-day retention by early browsing breadth** to test whether users with different levels of early item exploration show different retention outcomes
-
-The final analysis uses **exact-day any-event retention**. A user is counted as retained at D1, D7, D14, or D30 only if they have at least one event of any type (`view`, `addtocart`, or `transaction`) on that exact checkpoint day based on `TIMESTAMP_DIFF(..., DAY)`.
-
-Following the boundary cohort check in Section 4.4, the first and last cohort weeks are excluded from all reported retention metrics to avoid bias from incomplete data coverage.
-
-## 1/ Overall exact-day retention baseline
-| checkpoint | mature users | retained users | exact-day retention_rate |
-|------------|--------------|----------------|----------------|
-| D1         | 1,366,774    | 21,813         | 1.596%         |
-| D7         | 1,328,821    | 6,756          | 0.508%         |
-| D14        | 1,262,817    | 3,730          | 0.295%         |
-| D30        | 1,115,048    | 1,651          | 0.148%         |
-
-*Note: Mature users means users whose first_seen date is early enough that the dataset has enough observation time to measure that checkpoint.*
-
-The output shows that exact-day retention remains under 2% at all reported checkpoints. This means that only a small share of mature users were active on those exact checkpoint days. Retention also declines at later checkpoints, which is consistent with the stricter exact-day definition.
-
-## 2/ Weekly cohort retention pattern consistency
-To check whether the overall retention pattern was consistent across cohort weeks, I created a weekly cohort heatmap using exact-day retention at D1, D7, D14, and D30.
-
-![alt text](visuals/weekly_cohort_retention_heatmap.JPG)
-*Note: The first and last cohort weeks are shown for context, but they are treated as boundary cohorts and excluded from interpretation because of incomplete data coverage at the start and end of the dataset.*
-
-The output shows:
-- Reading vertically within the same checkpoint column, retention rates fluctuate across cohort weeks, but there is no clear pattern showing that later cohorts consistently retain worse than earlier cohorts.
-
-- Reading horizontally within each cohort row, exact-day retention generally declines from D1 to D7, then continues declining at D14 and D30. This pattern appears across most mature cohort weeks, suggesting that the overall retention shape is broadly consistent rather than being driven by only a few specific cohorts.
-
-- The largest visible checkpoint-to-checkpoint decline occurs from D1 to D7, suggesting that the steepest loss of returning users happens early in the post-acquisition period.
-
-- Later cohorts are blank at longer 
-checkpoints, which is expected because they are not yet mature enough for those windows.
-
-## 3/ Retention differences by early browsing breadth
-The primary segmentation is based on **distinct items interacted with in the first 3 days after `first_seen`**. Users are grouped into three buckets: `1_item`, `2_3_items`, and `4plus_items`. 
-
-I selected this segmentation because it provided a clearer user-level behavioral signal and aligned with the business question. Alternative segmentation candidates were screened separately and documented in `docs/segmentation_scope_screening.md`.
-
-| segment       | D1 retention | D7 retention | D14 retention | D30 retention |
-|---------------|--------------|--------------|---------------|---------------|
-| 1_item        | 0.62%        | 0.37%        | 0.23%         | 0.12%         |
-| 2_or_3_items  | 5.42%        | 0.89%        | 0.47%         | 0.24%         |
-| 4_plus_items  | 11.83%       | 2.57%        | 1.33%         | 0.63%         |
-
-*Note: Because D1 is partly inside the segment-definition window, I didn't use D1 retention as a key segmented outcome*
-
-Because browsing breadth is defined using the first 3 days after first_seen, the segmented retention comparison focuses on later checkpoints after that early behavior window closes: D7, D14, and D30.
-
-![alt text](visuals/later_exact_day_retention_by_early_browsing_breadth.JPG)
-
-The output shows:
-- Across all browsing-breadth segments, exact-day retention declines over time. 
-- Retention is consistently ordered by early browsing breadth: The 4_plus_items segment has the highest retention at every checkpoint, followed by 2_or_3_items, while 1_item has the lowest retention. This suggests that users who explore more distinct items in the first 3 days after first_seen are associated with stronger later return behavior.
-
-# KEY FINDINGS
-The overall table shows that exact-day retention declines sharply after D1. The weekly cohort heatmap confirms that this pattern is broadly consistent across mature cohort weeks rather than being driven by one unusual cohort. Together, these two views show that early retention drop-off is a recurring pattern in the dataset, not an isolated fluctuation.
-
-Within that recurring pattern, the largest visible checkpoint-to-checkpoint decline occurs from D1 to D7, making D1–D7 the most obvious first intervention window. The segmented retention analysis then adds a more actionable layer: early browsing breadth is meaningfully associated with later D7, D14, and D30 return behavior. This does not prove that browsing more items causes retention to improve, but it provides a useful early signal for identifying lower-engagement users who may benefit from retention interventions.
-
-# RECOMMENDED ACTIONS
-These recommendations are hypotheses to test, not proven causal effects:
-- **Test whether encouraging early item exploration improves retention:** during the first 3 days, showing related items, recently viewed recommendations or homepage recommendations to encourage newly observed users to explore more than one item
-
-- **Target low‑breadth users with a re‑engagement trigger:** shortly after the first 3 days, users who interact with only 1 item can be targeted with reminders or similar-item recommendations. This should be tested as an intervention, because the current analysis shows association rather than causation.
-
-- **D14 and D30 should remain follow-up checkpoints** to confirm whether these early improvements last, not just short-term return behavior.
-
-# LIMITATION
+# LIMITATIONS
 - **Cohort anchor is a proxy**  
 The dataset does not include true signup timestamps, so Day 0 is approximated using each user’s first observed event date. The analysis therefore reflects first-observed retention rather than true signup-based retention.
 
