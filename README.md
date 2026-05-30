@@ -14,7 +14,7 @@
 - [Appendix: Supporting Dataset Exploration](#appendix-supporting-dataset-exploration)
 
 # PROJECT OVERVIEW
-This project is a descriptive and diagnostic product analytics case study using the RetailRocket e-commerce event dataset.
+This project is a descriptive and diagnostic product analytics case study using the [RetailRocket](https://www.kaggle.com/datasets/retailrocket/ecommerce-dataset) e-commerce event dataset.
 
 For this portfolio case study, I frame the analysis around a realistic product/growth stakeholder concern: a product team suspects that many newly observed users may not be returning consistently after their first activity, and wants to understand where early retention opportunities may exist.
 
