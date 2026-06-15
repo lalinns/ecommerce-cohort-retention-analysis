@@ -3,7 +3,7 @@ After screening multiple candidates, I selected **early browsing breadth**, defi
 
 The goal of this screening was not to prove that rejected candidates are useless. Instead, the goal was to choose one primary segmentation that best supports the project’s business question:
 
-> How can we improve early retention and identify users needing support?
+> How can we validate the concern around newly observed user retention and improve retention outcomes?
 
 To choose the primary segmentation, I evaluated each candidate using the following criteria:
 - alignment with the early-session retention question
