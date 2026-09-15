@@ -111,7 +111,7 @@ checkpoints, which is expected because they are not yet mature enough for those 
 ## 3/ Retention differences by early browsing breadth
 The primary segmentation is based on **distinct items interacted with during the first 3 days after `first_seen`**. Users are grouped into three buckets: `1_item`, `2_3_items`, and `4plus_items`. 
 
-I selected this segmentation because it provided a clearer user-level behavioral signal and aligned with the business question. Alternative segmentation candidates were screened separately and documented in `docs/segmentation_scope_screening.md`.
+I selected this segmentation because it provided a clearer user-level behavioral signal and aligned with the business question. Alternative segmentation candidates were screened separately and documented in `docs/segmentation_candidates.md`.
 
 | segment       | D1 retention | D7 retention | D14 retention | D30 retention |
 |---------------|--------------|--------------|---------------|---------------|
